@@ -756,24 +756,24 @@ To see the progress in creating the Ingress service type :
 kubectl --namespace ingress-nginx get services -o wide ingress-nginx-controller
 ```
 
-Saikat_Dey@cloudshell:~ (ap-mumbai-1)$ kubectl --namespace ingress-nginx get services -o wide ingress-nginx-controller
-NAME                       TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)                      AGE     SELECTOR
-ingress-nginx-controller   LoadBalancer   10.96.176.225   <pending>     80:30682/TCP,443:32125/TCP   5m56s   app.kubernetes.io/component=controller,app.kubernetes.io/instance=ingress-nginx,app.kubernetes.io/name=ingress-nginx
+Saikat_Dey@cloudshell:helidon-kubernetes (ap-mumbai-1)$ kubectl --namespace ingress-nginx get services -o wide ingress-nginx-controller
+NAME                       TYPE           CLUSTER-IP     EXTERNAL-IP     PORT(S)                      AGE   SELECTOR
+ingress-nginx-controller   LoadBalancer   10.96.62.149   152.67.30.107   80:31003/TCP,443:30114/TCP   21h   app.kubernetes.io/component=controller,app.kubernetes
+
+![image](https://user-images.githubusercontent.com/42166489/108353547-4b197400-720e-11eb-9c65-16a323596455.png)
 
 Locate the Resources section on the lower left side.
 
 Click on the Listeners option.
 
-![image](https://user-images.githubusercontent.com/42166489/107913566-ad604380-6f86-11eb-802b-baad61dff755.png)
+![image](https://user-images.githubusercontent.com/42166489/108353568-51a7eb80-720e-11eb-969d-a807cfa60959.png)
 
 Click on the Listeners option and select Edit.
 
-![image](https://user-images.githubusercontent.com/42166489/107913585-b5b87e80-6f86-11eb-9e48-2508ae66eed5.png)
+![image](https://user-images.githubusercontent.com/42166489/108353596-58366300-720e-11eb-9fef-efeac7265f24.png)
 
 We need to change the port.
 In the popup locate the BackendSet option, click on it and select the TCP-80 option
-
-![image](https://user-images.githubusercontent.com/42166489/107913605-c0731380-6f86-11eb-8e10-55d16d7112a5.png)
 
 Click the Update Listener.
 Change the backend port to 80.
@@ -922,8 +922,10 @@ Switch to the helidon-kubernetes directory:
 ```
 cd $HOME/helidon-kubernetes
 ```
-
+**Note**: change the imagePullPolicy line in the stockmanager-deployment.yaml from "IfNotPresent" to "Always" 
 Now run the deploy.sh script
+
+<img width="638" alt="Screenshot 2021-02-23 at 1 31 26 PM" src="https://user-images.githubusercontent.com/42166489/108816053-7e2b8100-75db-11eb-9f9c-af5169485e48.png">
 
 ```
 bash deploy.sh
@@ -954,6 +956,10 @@ curl -i -k -X GET -u jack:password https://<external IP>/store/stocklevel
 
 If you get 424 failed dependency or timeouts it's because the services are doing their lazy initialization, wait a minute or so and retry the request.
 
+Try after sometime (replace with the ingress controllers load ballancer you got earlier)
+
+<img width="916" alt="Screenshot 2021-02-23 at 12 09 11 PM" src="https://user-images.githubusercontent.com/42166489/108810768-e2494780-75d1-11eb-94c1-7ff8fa30afe6.png">
+
 Run : 
 
 ```
@@ -969,10 +975,11 @@ zipkin            10.244.1.15:9411                            15h
 And also on the stockmanager pod, you also need to replace the pod id !
 
 ```
-kubectl logs stockmanager-d6cc5c9b7-bbjdp --tail=20
+kubectl logs stockmanager-7857497968-8wvdh --tail=200
 ```
+<img width="1383" alt="Screenshot 2021-02-23 at 12 14 30 PM" src="https://user-images.githubusercontent.com/42166489/108810782-e83f2880-75d1-11eb-8883-5d98560f6e28.png">
 
-![image](https://user-images.githubusercontent.com/42166489/107915949-717bad00-6f8b-11eb-9d86-b85ff47a2750.png)
+<img width="1385" alt="Screenshot 2021-02-23 at 12 16 03 PM" src="https://user-images.githubusercontent.com/42166489/108810786-eb3a1900-75d1-11eb-90bd-add5242e1243.png">
 
 Open your browser
 
@@ -1125,7 +1132,10 @@ First let's make sure that the service is running, (replace with the external ip
 curl -i -X GET -u jack:password http://<External IP>:80/store/stocklevel
 ```
 
+<img width="943" alt="Screenshot 2021-02-23 at 1 04 22 PM" src="https://user-images.githubusercontent.com/42166489/108813849-c648a480-75d7-11eb-829c-71180a1f3783.png">
+
 Lets look at the pods to check all is running fine:
+
 
 ```
 kubectl get pods
@@ -1495,16 +1505,13 @@ What happens if a request is made to the service while before the pod is ready ?
 
 To see what happens if the readiness probe does not work we can simply undeploy the stock manager service.
 
-    First let's check it's running fine (replace the with the one for your service, and be prepared for a short delay as we'd just restarted everything)
+First let's check it's running fine (replace the with the one for your service, and be prepared for a short delay as we'd just restarted everything)
 
+```
 curl -i -k -X GET -u jack:password https://<external IP>/store/stocklevel
-curl -i -k -X GET -u jack:password https://152.67.28.51/store/stocklevel
+```
 
-HTTP/1.1 424 Failed Dependency
-Date: Fri, 12 Feb 2021 10:45:34 GMT
-Content-Type: application/json
-Transfer-Encoding: chunked
-Connection: keep-alive
+<img width="916" alt="Screenshot 2021-02-23 at 12 09 11 PM" src="https://user-images.githubusercontent.com/42166489/108814831-7a96fa80-75d9-11eb-8c07-1c127d82bde8.png">
 
 Now let's use kubectl to undeploy just the stockmanager service
 kubectl delete -f stockmanager-deployment.yaml
@@ -1550,6 +1557,8 @@ Check the service is responding properly now
 ```
 curl -i -k -X GET -u jack:password https://<external IP>/store/stocklevel
 ```
+
+<img width="916" alt="Screenshot 2021-02-23 at 12 09 11 PM" src="https://user-images.githubusercontent.com/42166489/108814831-7a96fa80-75d9-11eb-8c07-1c127d82bde8.png">
 
 Startup probes:
 
@@ -1782,7 +1791,7 @@ cd $HOME/helidon-kubernetes/cloud-native-kubernetes/auto-scaling
 bash generate-load.sh 152.67.28.51 0.1
 ```
 
-![image](https://user-images.githubusercontent.com/42166489/107946882-a3a30400-6fb7-11eb-8802-4700470f5b0d.png)
+<img width="711" alt="Screenshot 2021-02-23 at 1 39 21 PM" src="https://user-images.githubusercontent.com/42166489/108816965-242bbb00-75dd-11eb-8e27-0e9c4fc4cedf.png">
 
 The script will just get the stock level data, attempting to do so about 10 times a second (the 0.1 above is the time in seconds to wait after the request returns). The returned data will be displayed in the […] (for clarity here it's been removed
 
@@ -1852,21 +1861,33 @@ Now restart the load generator program. Note that you may need to change the sle
 
 In the OCI Cloud Shell where you were running the load balancer previously (substitute the IP address for the ingress for your cluster) If needed run multiple in different cloud shells.
 
+```
 cd $HOME/helidon-kubernetes/cloud-native-kubernetes/auto-scaling
 bash generate-load.sh 152.67.28.51 0.1
+```
 
-![image](https://user-images.githubusercontent.com/42166489/107947303-393e9380-6fb8-11eb-84ef-27bcd383917c.png)
+<img width="919" alt="Screenshot 2021-02-23 at 2 30 27 PM" src="https://user-images.githubusercontent.com/42166489/108822415-0febbc00-75e5-11eb-927e-5c7c126cd755.png">
 
 Let's check there is a load. In the OCI Cloud Shell type
+
+```
 kubectl top pods
+```
 
 Let's look at the autoscaler. In the OCI Cloud Shell type
+
+```
 kubectl get horizontalpodautoscaler storefront
+```
 
 Let's look at the autoscaler details. In the OCI Cloud Shell type
+
+```
 kubectl describe hpa storefront
+```
 
 Let's look at those pods. In the OCI Cloud Shell type
+
 ```
 kubectl top pods
 ```
@@ -2153,8 +2174,9 @@ We should of course check that our update is correctly delivering a service (rep
 
 ```
 curl -i -k -X GET -u jack:password https://<external IP>/store/stocklevel
-curl -i -k -X GET -u jack:password https://152.67.28.51/store/stocklevel
 ```
+
+<img width="973" alt="Screenshot 2021-02-23 at 3 18 51 PM" src="https://user-images.githubusercontent.com/42166489/108826572-74f5e080-75ea-11eb-8a85-4129b65ed794.png">
 
 Now let's check the output from the StatusResource (again replace the IP address with the one for your service)
 
@@ -2295,4 +2317,6 @@ For more details on the service mesh concept the site servicemesh.io has lot's o
 https://servicemesh.io/
 
 You have reached the end of this section of the lab and of the Kubernetes sections.
+
+
 
