@@ -2318,5 +2318,3 @@ https://servicemesh.io/
 
 You have reached the end of this section of the lab and of the Kubernetes sections.
 
-
-
